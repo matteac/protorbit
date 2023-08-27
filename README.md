@@ -15,7 +15,7 @@ protorbit = "0.1.0"
 
 ProtOrbit provides a simple API for working with HTTP messages. Here are two examples of how to use ProtOrbit to handle incoming HTTP requests using the standard library and the Tokio runtime.
 
-### You can run this examples cloning the repo and running `cargo run --example=[async|std]`
+### You can run these examples cloning the repo and running `cargo run --example=[async|std]`
 
 ### Standard Library Example
 
