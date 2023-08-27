@@ -1,0 +1,18 @@
+[package]
+name = "examples"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[dev-dependencies]
+protorbit = { path = "../protorbit" }
+tokio = { version = "1.32.0", features = ["full"] }
+
+[[example]]
+name = "std"
+path = "std.rs"
+
+[[example]]
+name = "async"
+path = "async.rs"
+
