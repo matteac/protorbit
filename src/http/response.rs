@@ -3,10 +3,10 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub struct Response {
-    version: Version,
-    status_code: StatusCode,
-    headers: HashMap<String, String>,
-    body: String,
+    pub version: Version,
+    pub status_code: StatusCode,
+    pub headers: HashMap<String, String>,
+    pub body: String,
 }
 
 impl Response {
@@ -36,7 +36,7 @@ impl Response {
         let mut lines = head.split("\r\n").collect::<Vec<&str>>();
         let first_line = lines[0].split(" ").collect::<Vec<&str>>();
         lines.remove(0);
-        let (version, status, headers) = (first_line[0], first_line[1], first_line[2]);
+        let (version, status, _status_message) = (first_line[0], first_line[1], first_line[2]);
 
         let version = match super::version::Version::from_string(version) {
             Ok(v) => v,

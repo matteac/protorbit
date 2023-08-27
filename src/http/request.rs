@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub struct Request {
-    method: super::method::Method,
-    path: String,
-    version: super::version::Version,
-    headers: HashMap<String, String>,
-    body: String,
+    pub method: super::method::Method,
+    pub path: String,
+    pub version: super::version::Version,
+    pub headers: HashMap<String, String>,
+    pub body: String,
 }
 
 impl Request {
@@ -88,7 +88,7 @@ impl Request {
             body,
         })
     }
-    fn build(&self) -> String {
+    pub fn build(&self) -> String {
         let mut buffer = String::new();
         let s = format!(
             "{} {} {}\r\n",
@@ -106,19 +106,20 @@ impl Request {
     }
 }
 
+#[cfg(test)]
 mod test {
-    use crate::http::{method::Method, version::Version};
-    use std::collections::HashMap;
-
     #[test]
     fn test() {
         let raw_req = "GET / HTTP/1.1\r\nContent-Type: application/json\r\n\r\n{}";
         let req = super::Request::from_string(raw_req).unwrap();
         let expected_req = super::Request::new(
-            Method::GET,
+            crate::http::method::Method::GET,
             "/".to_string(),
-            Version::HTTP1_1,
-            HashMap::from([("Content-Type".to_string(), "application/json".to_string())]),
+            crate::http::version::Version::HTTP1_1,
+            std::collections::HashMap::from([(
+                "Content-Type".to_string(),
+                "application/json".to_string(),
+            )]),
             "{}".to_string(),
         );
         assert_eq!(req, expected_req);
