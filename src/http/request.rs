@@ -88,7 +88,10 @@ impl Request {
             body,
         })
     }
-    pub fn build(&self) -> String {
+}
+
+impl ToString for Request {
+    fn to_string(&self) -> String {
         let mut buffer = String::new();
         let s = format!(
             "{} {} {}\r\n",
