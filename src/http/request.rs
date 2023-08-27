@@ -88,10 +88,7 @@ impl Request {
             body,
         })
     }
-}
-
-impl ToString for Request {
-    fn to_string(&self) -> String {
+    pub fn build(&self) -> String {
         let mut buffer = String::new();
         let s = format!(
             "{} {} {}\r\n",
@@ -126,7 +123,7 @@ mod test {
             "{}".to_string(),
         );
         assert_eq!(req, expected_req);
-        let request_string = req.to_string();
+        let request_string = req.build();
         assert_eq!(raw_req, request_string);
     }
 }

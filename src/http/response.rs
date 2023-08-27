@@ -82,10 +82,7 @@ impl Response {
             body,
         })
     }
-}
-
-impl ToString for Response {
-    fn to_string(&self) -> String {
+    pub fn build(&self) -> String {
         let mut buffer = String::new();
         let s = format!(
             "{} {}\r\n",
@@ -117,7 +114,7 @@ mod test {
             "{}".to_string(),
         );
         assert_eq!(res, expected_res);
-        let response_string = res.to_string();
+        let response_string = res.build();
         assert_eq!(raw_res, response_string);
     }
 }
