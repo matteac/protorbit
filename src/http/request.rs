@@ -88,12 +88,27 @@ impl Request {
             body,
         })
     }
+    fn build(&self) -> String {
+        let mut buffer = String::new();
+        let s = format!(
+            "{} {} {}\r\n",
+            self.method.to_string(),
+            self.path,
+            self.version.to_string()
+        );
+        buffer.push_str(s.as_str());
+        for (h, v) in self.headers.iter() {
+            buffer.push_str(&format!("{}: {}\r\n", h, v));
+        }
+        buffer.push_str("\r\n");
+        buffer.push_str(&self.body);
+        buffer
+    }
 }
 
 mod test {
-    use std::collections::HashMap;
-
     use crate::http::{method::Method, version::Version};
+    use std::collections::HashMap;
 
     #[test]
     fn test() {
@@ -107,5 +122,7 @@ mod test {
             "{}".to_string(),
         );
         assert_eq!(req, expected_req);
+        let request_string = req.build();
+        assert_eq!(raw_req, request_string);
     }
 }
