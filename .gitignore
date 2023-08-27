@@ -1,2 +1,5 @@
 /target
 /Cargo.lock
+/examples/std_lib/target
+/examples/tokio_async/target
+
