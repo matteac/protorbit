@@ -8,7 +8,7 @@ Add the following line to your `Cargo.toml` file to include ProtOrbit in your pr
 
 ```toml
 [dependencies]
-protorbit = "0.1.0"
+protorbit = "0.2.1"
 ```
 
 ## Usage
@@ -28,26 +28,33 @@ use std::net::{TcpListener, TcpStream};
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
     for stream in listener.incoming() {
-        let stream = stream.unwrap();
-        println!("Connection established!");
-        handle(stream);
+        match stream {
+            Ok(stream) => handle(stream),
+            Err(err) => {
+                eprintln!("STREAM ERROR: {}", err);
+            }
+        }
     }
 }
 
 fn handle(mut stream: TcpStream) {
     let mut buffer: [u8; 1024] = [0; 1024];
-    stream.read(&mut buffer).unwrap();
-    let request = http::Request::from_string(String::from_utf8(buffer.to_vec()).unwrap()).unwrap();
+    let n = stream.read(&mut buffer).unwrap();
+    let request =
+        http::Request::try_from(String::from_utf8(buffer[0..n].to_vec()).unwrap()).unwrap();
 
     let mut response_headers = HashMap::new();
-    response_headers.insert("Content-Type".to_string(), "text/plain".to_string());
+    response_headers.insert("Content-Type".to_string(), "text/html".to_string());
+
     let response = http::Response::new(
         http::Version::HTTP1_1,
         http::StatusCode::NotFound,
+        "Not Found".into(),
         response_headers,
         format!("Error 404: {} NotFound", request.path),
     );
-    stream.write(response.to_string().as_bytes()).unwrap();
+
+    let _ = stream.write(Into::<String>::into(response).as_bytes());
 }
 ```
 
@@ -58,11 +65,15 @@ use protorbit::http;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
+use tokio::io::AsyncReadExt;
+use tokio::io::AsyncWriteExt;
 use tokio::net::TcpListener;
 use tokio::net::TcpStream;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    // Parse the arguments, bind the TCP socket we'll be listening to, spin up
+    // our worker threads, and start shipping sockets to those worker threads.
     let addr = env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:8080".to_string());
@@ -72,30 +83,33 @@ async fn main() -> Result<(), Box<dyn Error>> {
     loop {
         let (stream, _) = server.accept().await?;
         tokio::spawn(async move {
-            println!("Accepted connection from {}", stream.peer_addr().unwrap());
-            if let Err(e) = handle(stream).await {
-                println!("failed to process connection; error = {}", e);
-            }
+            handle(stream).await;
         });
     }
 }
 
-async fn handle(stream: TcpStream) -> Result<(), Box<dyn Error>> {
-    let mut buffer = [0; 1024];
-    stream.try_read(&mut buffer)?;
-    let request = http::Request::from_string(String::from_utf8_lossy(&buffer)).unwrap();
-    println!("{:#?}", request);
+async fn handle(mut stream: TcpStream) {
+    let mut buffer: [u8; 1024] = [0; 1024];
+    let n = stream.read(&mut buffer).await.unwrap();
+    let request =
+        http::Request::try_from(String::from_utf8(buffer[0..n].to_vec()).unwrap()).unwrap();
+
     let mut response_headers = HashMap::new();
-    response_headers.insert("Content-Type".to_string(), "text/plain".to_string());
+    response_headers.insert("Content-Type".to_string(), "text/html".to_string());
+
     let response = http::Response::new(
         http::Version::HTTP1_1,
         http::StatusCode::NotFound,
+        "Not Found".into(),
         response_headers,
         format!("Error 404: {} NotFound", request.path),
     );
-    stream.try_write(response.to_string().as_bytes())?;
-    Ok(())
+
+    let _ = stream
+        .write(Into::<String>::into(response).as_bytes())
+        .await;
 }
+
 ```
 
 ## Future Plans
