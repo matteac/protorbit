@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Method {
     GET,
     HEAD,
