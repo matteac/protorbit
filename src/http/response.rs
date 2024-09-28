@@ -5,6 +5,7 @@ use std::collections::HashMap;
 pub struct Response {
     pub version: Version,
     pub status_code: StatusCode,
+    pub status_message: String,
     pub headers: HashMap<String, String>,
     pub body: String,
 }
@@ -13,83 +14,81 @@ impl Response {
     pub fn new(
         version: Version,
         status_code: StatusCode,
+        status_message: String,
         headers: HashMap<String, String>,
         body: String,
     ) -> Self {
         Self {
             version,
             status_code,
+            status_message,
             headers,
             body,
         }
     }
-    fn parse_head(
-        head: &str,
-    ) -> Result<
-        (
-            super::version::Version,
-            super::status::StatusCode,
-            HashMap<String, String>,
-        ),
-        Box<dyn std::error::Error>,
-    > {
-        let mut lines = head.split("\r\n").collect::<Vec<&str>>();
-        let first_line = lines[0].split(" ").collect::<Vec<&str>>();
-        lines.remove(0);
-        let (version, status, _status_message) = (first_line[0], first_line[1], first_line[2]);
-
-        let version = match super::version::Version::from_string(version) {
-            Ok(v) => v,
-            Err(e) => return Err(e),
+    fn parse(data: impl Into<String>) -> anyhow::Result<Self> {
+        let data = data.into();
+        let mut lines = data.lines();
+        let res_line = match lines.next() {
+            Some(line) => line,
+            None => return Err(anyhow::anyhow!("Invalid response line")),
         };
-        let status = match super::status::StatusCode::from_string(status) {
-            Ok(s) => s,
-            Err(e) => return Err(e),
+        let (version, rest) = match res_line.split_once(" ") {
+            Some((version, res)) => (Version::try_from(Into::<String>::into(version))?, res),
+            None => return Err(anyhow::anyhow!("Invalid response line")),
         };
-        let mut headers = HashMap::new();
-        for line in lines {
-            let tmp = line.split(":").collect::<Vec<&str>>();
-            let (key, value) = (tmp[0], tmp[1]);
-            headers.insert(key.trim().to_string(), value.trim().to_string());
-        }
+        let (status_code, status_message) = match rest.split_once(" ") {
+            Some((code, msg)) => (
+                StatusCode::try_from(Into::<String>::into(code))?,
+                Into::<String>::into(msg),
+            ),
+            None => return Err(anyhow::anyhow!("Invalid response line")),
+        };
 
-        Ok((version, status, headers))
-    }
-    fn parse_body(body: &str) -> String {
-        let chs = body.chars().collect::<Vec<char>>();
-        let mut buffer = String::new();
-
-        for ch in chs {
-            match ch {
-                '\0' => break,
-                _ => buffer.push(ch),
+        let mut headers: HashMap<String, String> = HashMap::new();
+        while let Some(header) = lines.next() {
+            if header == "" {
+                // \r\n\r\n
+                break;
             }
+            let (k, v) = match header.split_once(":") {
+                Some((k, v)) => (
+                    Into::<String>::into(k.trim()),
+                    Into::<String>::into(v.trim()),
+                ),
+                None => return Err(anyhow::anyhow!("Invalid header")),
+            };
+            headers.insert(k, v);
         }
-        buffer
-    }
-    pub fn from_string(r: impl Into<String>) -> Result<Self, Box<dyn std::error::Error>> {
-        let r = r.into();
-        let head = r.split("\r\n\r\n").collect::<Vec<&str>>()[0];
-        let body = Self::parse_body(r.split("\r\n\r\n").collect::<Vec<&str>>()[1]);
-        let (version, status, headers) = match Self::parse_head(head) {
-            Ok(h) => h,
-            Err(e) => return Err(e),
-        };
+        let mut body = String::new();
+        while let Some(line) = lines.next() {
+            body.push_str(line);
+        }
         Ok(Self {
             version,
-            status_code: status,
+            status_code,
+            status_message,
             headers,
             body,
         })
     }
 }
-impl ToString for Response {
-    fn to_string(&self) -> String {
+
+impl TryFrom<String> for Response {
+    type Error = anyhow::Error;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Response::parse(value)
+    }
+}
+
+impl Into<String> for Response {
+    fn into(self) -> String {
         let mut buffer = String::new();
         let s = format!(
-            "{} {}\r\n",
-            self.version.to_string(),
-            self.status_code.to_string(),
+            "{} {} {}\r\n",
+            Into::<String>::into(self.version),
+            Into::<String>::into(self.status_code),
+            self.status_message
         );
         buffer.push_str(s.as_str());
         for (h, v) in self.headers.iter() {
@@ -108,15 +107,16 @@ mod test {
     #[test]
     fn test() {
         let raw_res = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{}";
-        let res = Response::from_string(raw_res).unwrap();
+        let res = Response::try_from(Into::<String>::into(raw_res)).unwrap();
         let expected_res = Response::new(
             Version::HTTP1_1,
             StatusCode::OK,
-            HashMap::from([("Content-Type".to_string(), "application/json".to_string())]),
-            "{}".to_string(),
+            "Ok".into(),
+            HashMap::from([("Content-Type".into(), "application/json".into())]),
+            "{}".into(),
         );
         assert_eq!(res, expected_res);
-        let response_string = res.build();
+        let response_string: String = res.into();
         assert_eq!(raw_res, response_string);
     }
 }

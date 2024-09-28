@@ -2,7 +2,7 @@
 name = "protorbit"
 authors = ["matteac"]
 description = "A simple HTTP library"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/matteac/protorbit"
@@ -10,6 +10,7 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.89"
 
 [dev-dependencies]
 tokio = { version = "1.32.0", features = ["full"] }

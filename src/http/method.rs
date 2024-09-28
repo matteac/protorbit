@@ -1,36 +1,45 @@
+use anyhow::anyhow;
+
 #[derive(Debug, PartialEq)]
 pub enum Method {
     GET,
+    HEAD,
     POST,
     PUT,
     DELETE,
+    CONNECT,
+    TRACE,
     PATCH,
 }
 
-impl Method {
-    pub fn from_string(s: impl Into<String>) -> Result<Self, Box<dyn std::error::Error>> {
-        let s = s.into();
-        let s = s.to_uppercase();
-        let m = match s.as_str() {
-            "GET" => Self::GET,
-            "POST" => Self::POST,
-            "PUT" => Self::PUT,
-            "DELETE" => Self::DELETE,
-            "PATCH" => Self::PATCH,
-            _ => return Err("Invalid method".into()),
-        };
-        return Ok(m);
+impl TryFrom<String> for Method {
+    type Error = anyhow::Error;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.to_uppercase().as_str() {
+            "GET" => Ok(Self::GET),
+            "HEAD" => Ok(Self::HEAD),
+            "POST" => Ok(Self::POST),
+            "PUT" => Ok(Self::PUT),
+            "DELETE" => Ok(Self::DELETE),
+            "CONNECT" => Ok(Self::CONNECT),
+            "TRACE" => Ok(Self::TRACE),
+            "PATCH" => Ok(Self::PATCH),
+            _ => Err(anyhow!("Invalid HTTP Method")),
+        }
     }
 }
 
-impl ToString for Method {
-    fn to_string(&self) -> String {
+impl Into<String> for Method {
+    fn into(self) -> String {
         match self {
-            Self::GET => "GET".to_string(),
-            Self::POST => "POST".to_string(),
-            Self::PUT => "PUT".to_string(),
-            Self::DELETE => "DELETE".to_string(),
-            Self::PATCH => "PATCH".to_string(),
+            Self::GET => "GET".into(),
+            Self::HEAD => "HEAD".into(),
+            Self::POST => "POST".into(),
+            Self::PUT => "PUT".into(),
+            Self::DELETE => "DELETE".into(),
+            Self::CONNECT => "CONNECT".into(),
+            Self::TRACE => "TRACE".into(),
+            Self::PATCH => "PATCH".into(),
         }
     }
 }
