@@ -63,6 +63,7 @@ impl Response {
         let mut body = String::new();
         while let Some(line) = lines.next() {
             body.push_str(line);
+            body.push('\n'); // newline is important in some cases
         }
         Ok(Self {
             version,

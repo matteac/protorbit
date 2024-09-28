@@ -8,7 +8,7 @@ Add the following line to your `Cargo.toml` file to include ProtOrbit in your pr
 
 ```toml
 [dependencies]
-protorbit = "0.2.1"
+protorbit = "0.2.2"
 ```
 
 ## Usage
