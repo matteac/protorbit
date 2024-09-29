@@ -5,7 +5,7 @@ use crate::http::Method;
 
 use super::Version;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Request {
     pub method: super::method::Method,
     pub path: String,

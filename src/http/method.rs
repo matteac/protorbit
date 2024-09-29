@@ -1,9 +1,10 @@
 use anyhow::anyhow;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Method {
     GET,
     HEAD,
+    OPTIONS,
     POST,
     PUT,
     DELETE,
@@ -18,6 +19,7 @@ impl TryFrom<String> for Method {
         match value.to_uppercase().as_str() {
             "GET" => Ok(Self::GET),
             "HEAD" => Ok(Self::HEAD),
+            "OPTIONS" => Ok(Self::OPTIONS),
             "POST" => Ok(Self::POST),
             "PUT" => Ok(Self::PUT),
             "DELETE" => Ok(Self::DELETE),
@@ -34,6 +36,7 @@ impl Into<String> for Method {
         match self {
             Self::GET => "GET".into(),
             Self::HEAD => "HEAD".into(),
+            Self::OPTIONS => "OPTIONS".into(),
             Self::POST => "POST".into(),
             Self::PUT => "PUT".into(),
             Self::DELETE => "DELETE".into(),

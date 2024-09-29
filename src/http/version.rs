@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Version {
     HTTP0_9,
     HTTP1_0,
